@@ -150,15 +150,17 @@ Future<_Response> _sendRequest(
       ioRequest.cookies.addAll(cookies);
 
     HttpClientResponse res =
-        await stream.pipe(DelegatingStreamConsumer.typed(ioRequest));
+        await stream.pipe(DelegatingStreamConsumer(ioRequest));
     var headers = <String, String>{};
     res.headers.forEach((key, values) {
       headers[key] = values.join(',');
     });
 
+    ioRequest.close();
+
     return _Response(
       http.StreamedResponse(
-        DelegatingStream.typed<List<int>>(res).handleError(
+        DelegatingStream<List<int>>(res).handleError(
             (error) => throw http.ClientException(error.message, error.uri),
             test: (error) => error is HttpException),
         res.statusCode,
@@ -204,7 +206,6 @@ class Cookies {
   }
 
   List<Cookie> _cookies;
-  Map<String, List<Cookies>> _sessions;
   File path;
 
   Future<void> _initCookies() async {
